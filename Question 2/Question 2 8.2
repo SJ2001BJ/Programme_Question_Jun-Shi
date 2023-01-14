@@ -1,0 +1,89 @@
+import warnings
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+#suppress warnings
+warnings.filterwarnings('ignore')
+
+
+# QUESTION2 8.2
+#define the rate constants
+k1 = 100/(10 ** - 6*60)
+k2 = 600/60
+k3 = 150/60
+
+#define the initial concentrations
+E_0 = 1*(10 ** -6)
+S_0 = 10*(10 ** -6)
+ES_0 = 0
+P_0 = 0
+
+#define the time step and the number of steps
+dt = 0.01
+
+#ajustment
+n_steps = 100
+
+#create arrays to store the concentrations at each time step
+E = np.zeros(n_steps)
+S = np.zeros(n_steps)
+ES = np.zeros(n_steps)
+P = np.zeros(n_steps)
+
+#set the initial concentrations
+E[0] = E_0
+S[0] = S_0
+ES[0] = ES_0
+P[0] = P_0
+
+#define a function to calulate the rate of change of each species
+def dXdt(E,S,ES,P,k1,k2,k3) :
+    dEdt = k2 * ES - k1 * E * S
+    dSdt = - k1 * E * S + k2 * ES
+    dESdt = k1 * E * S - k3 * ES
+    dPdt = k3 * ES
+    return dEdt, dSdt, dESdt, dPdt
+
+# use the Runge-Kutta method to numerically solve the equations
+for i in range(1, n_steps):
+    k1E, k1S, k1ES, k1P = dXdt(E[i-1], S[i-1], ES[i-1], P[i-1], k1, k2, k3)
+    k2E, k2S, k2ES, k2P = dXdt(E[i-1] + 0.5 * dt * k1E, S[i-1] + 0.5 * dt * k1S, ES[i-1] + 0.5 * dt * k1ES, P[i-1] + 0.5 * dt * k1P, k1, k2, k3)
+    k3E, k3S, k3ES, k3P = dXdt(E[i - 1] + 0.5 * dt * k2E, S[i - 1] + 0.5 * dt * k2S, ES[i - 1] + 0.5 * dt * k2ES,
+                               P[i - 1] + 0.5 * dt * k2P, k1, k2, k3)
+    k4E, k4S, k4ES, k4P = dXdt(E[i - 1] + dt * k3E, S[i - 1] + dt * k3S, ES[i - 1] + dt * k3ES, P[i - 1] + dt * k3P, k1,
+                               k2, k3)
+
+    E[i] = E[i-1] + (dt/6)*(k1E + 2 * k2E + 2 * k3E + k4E)
+    S[i] = S[i-1] + (dt/6)*(k1S + 2 * k2S + 2 * k2ES + k4ES)
+    ES[i] = ES[i-1] + (dt/6)*(k1ES + 2 * k2ES + 2 * k3ES + k4ES)
+    P[i] = P[i-1] + (dt/6)*(k1P + 2 * k2P + 2 * k3P + k4P)
+
+print("Final concentrations: E = %s μM, S = %s μM, ES = %s μM, P = %s μM" % (E[n_steps-1], S[n_steps-1], ES[n_steps-1], P[n_steps-1]))
+
+# # plot the concentrations of each species over time
+# plt.plot(E, label='E')
+# plt.plot(S, label='S')
+# plt.plot(ES, label='ES')
+# plt.plot(P, label='P')
+# plt.xlabel('Time (s)')
+# plt.ylabel('Concentration (μM)')
+# plt.legend()
+# plt.show()
+
+
+
+
+#QUESTION2 8.3
+# calculate the velocity at each time step
+V = np.zeros(n_steps)
+for i in range(1, n_steps):
+    V[i] = (P[i] - P[i-1]) / dt
+
+# plot the velocity as a function of S
+plt.plot(S, V)
+plt.xlabel('Concentration of substrate S (μM)')
+plt.ylabel('Velocity (μM/s)')
+plt.show()
+
+Vm = max(V)
